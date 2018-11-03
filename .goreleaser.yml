@@ -1,0 +1,44 @@
+project_name: eniconfig-controller
+
+# Builds the binary for each platform
+builds:
+- binary: eniconfig-controller
+  main: ./cmd/eniconfig-controller
+  goos:
+  - darwin
+  - windows
+  - linux
+  goarch:
+  - amd64
+
+# Will package downloadable archives to share on Github
+archive:
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+  format: tar.gz
+  format_overrides:
+    - goos: windows
+      format: zip
+
+# Use short hash for commit ldflags
+git:
+  short_hash: true
+
+# Release will configure where the GitHub release is handled
+release:
+  github:
+    owner: christopherhein
+    name: eniconfig-controller
+  draft: false
+  prerelease: true
+
+# Creates a Docker container with the operator packaged into it for distribution
+dockers:
+- image: christopherhein/eniconfig-controller
+  binary: eniconfig-controller
+  dockerfile: Dockerfile
+  tag_templates:
+  - "{{ .Tag }}"
+  - "latest"

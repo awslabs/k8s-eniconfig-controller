@@ -1,0 +1,4 @@
+.envrc
+kubeconfig
+/eniconfig-controller
+dist/

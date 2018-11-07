@@ -1,0 +1,17 @@
+apiVersion: v1
+appVersion: "v0.0.1-alpha1"
+name: eniconfig-controller
+description: |
+  This controller will allow you to automatically annotate your nodes with an
+  ENIConfig Custom Resource name.
+version: 0.0.1
+keywords:
+  - AWS
+home: https://github.com/christopherhein/eniconfig-controller
+sources:
+  - https://github.com/christopherhein/eniconfig-controller
+maintainers:
+  - name: christopherhein
+    email: me@chrishein.com
+engine: gotpl
+tillerVersion: ">=2.8.0"

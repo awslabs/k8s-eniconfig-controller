@@ -1,0 +1,2 @@
+Thank you for installing the ENIConfig Controller. If you ever need to change
+the `ENIConfig` CR that will be used change the `values.yaml` attribute.

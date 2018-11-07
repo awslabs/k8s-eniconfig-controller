@@ -2,12 +2,28 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:61eda50b1c7785c6d876b3d31053a677313d5a85309668f29f7cb6d7ac0f0ab6"
+  name = "github.com/christopherhein/go-version"
+  packages = ["."]
+  pruneopts = ""
+  revision = "fee8dd1f7c24da23508e26347694be0acce5631b"
+
+[[projects]]
   digest = "1:0deddd908b6b4b768cfc272c16ee61e7088a60f7fe2f06c547bd3d8e1f8b8e77"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = ""
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
+
+[[projects]]
+  digest = "1:eb53021a8aa3f599d29c7102e65026242bdedce998a54837dc67f14b6a97c5fd"
+  name = "github.com/fsnotify/fsnotify"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  version = "v1.4.7"
 
 [[projects]]
   digest = "1:b13707423743d41665fd23f0c36b2f37bb49c30e94adb813319c44188a51ba22"
@@ -109,6 +125,25 @@
   version = "v0.5.0"
 
 [[projects]]
+  digest = "1:d14365c51dd1d34d5c79833ec91413bfbb166be978724f15701e17080dc06dec"
+  name = "github.com/hashicorp/hcl"
+  packages = [
+    ".",
+    "hcl/ast",
+    "hcl/parser",
+    "hcl/printer",
+    "hcl/scanner",
+    "hcl/strconv",
+    "hcl/token",
+    "json/parser",
+    "json/scanner",
+    "json/token",
+  ]
+  pruneopts = ""
+  revision = "8cb6e5b959231cc1119e43259c4a608f9c51a241"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:7ab38c15bd21e056e3115c8b526d201eaf74e0308da9370997c6b3c187115d36"
   name = "github.com/imdario/mergo"
   packages = ["."]
@@ -117,12 +152,36 @@
   version = "v0.3.6"
 
 [[projects]]
+  digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
+  name = "github.com/inconshreveable/mousetrap"
+  packages = ["."]
+  pruneopts = ""
+  revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+  version = "v1.0"
+
+[[projects]]
   digest = "1:b79fc583e4dc7055ed86742e22164ac41bf8c0940722dbcb600f1a3ace1a8cb5"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = ""
   revision = "1624edc4454b8682399def8740d46db5e4362ba4"
   version = "v1.1.5"
+
+[[projects]]
+  digest = "1:961dc3b1d11f969370533390fdf203813162980c858e1dabe827b60940c909a5"
+  name = "github.com/magiconair/properties"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c2353362d570a7bfa228149c62842019201cfb71"
+  version = "v1.8.0"
+
+[[projects]]
+  digest = "1:bcc46a0fbd9e933087bef394871256b5c60269575bb661935874729c65bbbf60"
+  name = "github.com/mitchellh/mapstructure"
+  packages = ["."]
+  pruneopts = ""
+  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
+  version = "v1.1.2"
 
 [[projects]]
   digest = "1:0c0ff2a89c1bb0d01887e1dac043ad7efbf3ec77482ef058ac423d13497e16fd"
@@ -141,6 +200,14 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:894aef961c056b6d85d12bac890bf60c44e99b46292888bfa66caf529f804457"
+  name = "github.com/pelletier/go-toml"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   digest = "1:c24598ffeadd2762552269271b3b1510df2d83ee6696c1e543a0ff653af494bc"
   name = "github.com/petar/GoLLRB"
@@ -157,12 +224,55 @@
   version = "v2.0.1"
 
 [[projects]]
+  digest = "1:d0431c2fd72e39ee43ea7742322abbc200c3e704c9102c5c3c2e2e667095b0ca"
+  name = "github.com/spf13/afero"
+  packages = [
+    ".",
+    "mem",
+  ]
+  pruneopts = ""
+  revision = "d40851caa0d747393da1ffb28f7f9d8b4eeffebd"
+  version = "v1.1.2"
+
+[[projects]]
+  digest = "1:ae3493c780092be9d576a1f746ab967293ec165e8473425631f06658b6212afc"
+  name = "github.com/spf13/cast"
+  packages = ["."]
+  pruneopts = ""
+  revision = "8c9545af88b134710ab1cd196795e7f2388358d7"
+  version = "v1.3.0"
+
+[[projects]]
+  digest = "1:a1403cc8a94b8d7956ee5e9694badef0e7b051af289caad1cf668331e3ffa4f6"
+  name = "github.com/spf13/cobra"
+  packages = ["."]
+  pruneopts = ""
+  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
+  version = "v0.0.3"
+
+[[projects]]
+  digest = "1:9ceffa4ab5f7195ecf18b3a7fff90c837a9ed5e22e66d18069e4bccfe1f52aa0"
+  name = "github.com/spf13/jwalterweatherman"
+  packages = ["."]
+  pruneopts = ""
+  revision = "4a4406e478ca629068e7768fc33f3f044173c0a6"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:cbaf13cdbfef0e4734ed8a7504f57fe893d471d62a35b982bf6fb3f036449a66"
   name = "github.com/spf13/pflag"
   packages = ["."]
   pruneopts = ""
   revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
   version = "v1.0.3"
+
+[[projects]]
+  digest = "1:1ed7a19588d3b74fc6a45fe89f95aa980a34870342fb9c3183b19cad08b18a1e"
+  name = "github.com/spf13/viper"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2c12c60302a5a0e62ee102ca9bc996277c2f64f5"
+  version = "v1.2.1"
 
 [[projects]]
   branch = "master"
@@ -515,7 +625,10 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/christopherhein/go-version",
     "github.com/golang/glog",
+    "github.com/spf13/cobra",
+    "github.com/spf13/viper",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/util/runtime",

@@ -77,6 +77,13 @@ $ go build -o eniconfig-controller .
 $ ./eniconfig-controller -kubeconfig=$KUBECONFIG
 ```
 
+## Running in Dev
+
+```sh
+# assumes you have a working kubeconfig, not required if operating in-cluster
+$ go build -o eniconfig-controller .
+$ ./eniconfig-controller -kubeconfig=$HOME/.kube/config -eniconfig-name=name-of-eni
+
 ## Releasing
 
 To release this project all you have to do is run `make release`.

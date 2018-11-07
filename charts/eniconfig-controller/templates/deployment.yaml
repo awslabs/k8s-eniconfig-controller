@@ -25,7 +25,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - --eniconfig-name={{ .Values.eniConfigName }}
+            - server
+            - --eniconfig-name={{ .Values.eniconfigName }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}

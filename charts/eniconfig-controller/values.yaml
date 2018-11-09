@@ -8,12 +8,20 @@ replicaCount: 1
 
 image:
   repository: christopherhein/eniconfig-controller
-  tag: v0.0.1-alpha2
+  tag: v0.0.1-alpha3
   pullPolicy: Always
+
+controller:
+  # If you want to change the values of the operator change thes values.
+  # kubeconfig:
+  # region: us-west-2
+  # master:
+  # automaticENIConfig: false
+  # eniConfigName: default-eniconfig
+  # eniConfigTagName: k8s.amazonaws.com/eniConfig
 
 nameOverride: ""
 fullnameOverride: ""
-
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

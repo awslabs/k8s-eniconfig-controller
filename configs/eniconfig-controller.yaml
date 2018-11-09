@@ -62,4 +62,7 @@ items:
           imagePullPolicy: Always
           args:
             - server
-            - --eniconfig-name=<eniconfig-name>
+            - --region=us-west-2
+            - --automatic-eniconfig
+            # - --eniconfig-name=default-eniconfig
+            - --eniconfig-tag-name=k8s.amazonaws.com/eniConfig

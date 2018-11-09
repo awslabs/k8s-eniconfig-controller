@@ -26,7 +26,25 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - server
-            - --eniconfig-name={{ .Values.eniconfigName }}
+            {{ if .Values.controller.kubeconfig }}
+            - --kubeconfig={{ .Values.controller.kubeconfig }}
+            {{- end }}
+            {{ if .Values.controller.region }}
+            - --region={{ .Values.controller.region }}
+            {{- end }}
+            {{ if .Values.controller.master }}
+            - --master={{ .Values.controller.master }}
+            {{- end }}
+            {{ if .Values.controller.automaticENIConfig }}
+            - --automatic-eniconfig={{ .Values.controller.automaticENIConfig }}
+            {{- end }}
+            {{ if .Values.controller.eniConfigName }}
+            - --eniconfig-name={{ .Values.controller.eniConfigName }}
+            {{- end }}
+            {{ if .Values.controller.eniConfigTagName }}
+            - --eniconfig-tag-name={{ .Values.controller.eniConfigTagName }}
+            {{- end }}
+
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}

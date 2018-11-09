@@ -81,4 +81,5 @@ items:
           args:
             - server
             - --automatic-eniconfig
-            #- --region=us-west-2
+            - --eniconfig-tag-name=k8s.amazonaws.com/eniConfig
+            # - --eniconfig-name=default-eniconfig

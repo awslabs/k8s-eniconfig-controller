@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/christopherhein/eniconfig-controller/pkg/config"
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,10 +17,12 @@ import (
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 )
 
 const controllerAgentName = "eniconfig-controller"
+const annotationName = "k8s.amazonaws.com/eniConfig"
 
 // Controller is the controller implementation for Foo resources
 type controller struct {
@@ -29,7 +32,7 @@ type controller struct {
 	nodesLister corelisters.NodeLister
 	nodesSynced cache.InformerSynced
 
-	eniconfigName string
+	conf config.Config
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
 	// processed instead of performing it as soon as a change happens. This
@@ -46,7 +49,7 @@ type controller struct {
 func New(
 	kubeclientset kubernetes.Interface,
 	nodeInformer coreinformers.NodeInformer,
-	eniconfigName string) *controller {
+	conf config.Config) *controller {
 
 	// Create event broadcaster
 	// Add sample-controller types to the default Kubernetes Scheme so Events can be
@@ -61,7 +64,7 @@ func New(
 		kubeclientset: kubeclientset,
 		nodesLister:   nodeInformer.Lister(),
 		nodesSynced:   nodeInformer.Informer().HasSynced,
-		eniconfigName: eniconfigName,
+		conf:          conf,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Foos"),
 		recorder:      recorder,
 	}
@@ -94,24 +97,21 @@ func (c *controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer runtime.HandleCrash()
 	defer c.workqueue.ShutDown()
 
-	// Start the informer factories to begin populating the informer caches
-	glog.Info("Starting Foo controller")
-
 	// Wait for the caches to be synced before starting workers
-	glog.Info("Waiting for informer caches to sync")
+	glog.Info("waiting for informer caches to sync")
 	if ok := cache.WaitForCacheSync(stopCh, c.nodesSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
-	glog.Info("Starting workers")
+	glog.Info("starting workers")
 	// Launch two workers to process Foo resources
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
-	glog.Info("Started workers")
+	glog.Info("started workers")
 	<-stopCh
-	glog.Info("Shutting down workers")
+	glog.Info("shutting down workers")
 
 	return nil
 }
@@ -161,7 +161,7 @@ func (c *controller) processNextWorkItem() bool {
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		c.workqueue.Forget(obj)
-		glog.Infof("Successfully synced '%s'", key)
+		glog.Infof("successfully synced '%s'", key)
 		return nil
 	}(obj)
 
@@ -192,19 +192,33 @@ func (c *controller) handleObject(obj interface{}) {
 			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
 			return
 		}
-		glog.V(4).Infof("Recovered deleted object '%s' from tombstone", object.GetName())
+		glog.V(4).Infof("recovered deleted object '%s' from tombstone", object.GetName())
 	}
-	glog.V(4).Infof("Processing object: %s", object.GetName())
+	glog.V(4).Infof("processing object: %s", object.GetName())
 
-	node := obj.(*corev1.Node).DeepCopy()
+	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		node, err := c.kubeclientset.Core().Nodes().Get(object.GetName(), metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		nodeCopy := node.DeepCopy()
 
-	nodeAnno := node.Annotations
-	nodeAnno["k8s.amazonaws.com/eniConfig"] = c.eniconfigName
-	node.Annotations = nodeAnno
+		eniConfigName, err := c.conf.GetName(nodeCopy.Spec.ProviderID)
+		if err != nil {
+			return err
+		}
 
-	_, err := c.kubeclientset.Core().Nodes().Update(node)
-	if err != nil {
-		runtime.HandleError(fmt.Errorf("error updating node object, invalid type"))
+		nodeCopy.ResourceVersion = ""
+		nodeCopy.Annotations[annotationName] = eniConfigName
+
+		_, err = c.kubeclientset.Core().Nodes().Update(nodeCopy)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if retryErr != nil {
+		runtime.HandleError(fmt.Errorf("Error updating node object %s", retryErr.Error()))
 		return
 	}
 	return

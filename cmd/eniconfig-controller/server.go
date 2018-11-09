@@ -3,6 +3,10 @@ package main
 import (
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/christopherhein/eniconfig-controller/pkg/config"
 	"github.com/christopherhein/eniconfig-controller/pkg/controller"
 	"github.com/christopherhein/eniconfig-controller/pkg/signals"
 	"github.com/golang/glog"
@@ -32,9 +36,29 @@ var serverCmd = &cobra.Command{
 
 		kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 
+		awsSession, err := session.NewSession()
+		if err != nil {
+			glog.Fatalf("Error getting creating aws session: %s", err.Error())
+		}
+
+		metadata := ec2metadata.New(awsSession)
+		if region == "" {
+			region, err = metadata.Region()
+			if err != nil {
+				glog.Fatalf("Error getting ec2 region: %s", err.Error())
+			}
+		}
+
+		awsSession, err = session.NewSession(&aws.Config{Region: aws.String(region)})
+		if err != nil {
+			glog.Fatalf("Error getting creating aws session: %s", err.Error())
+		}
+
+		conf := config.New(automaticENIConfig, eniconfigName, eniconfigTagName, awsSession)
+
 		ctrl := controller.New(kubeClient,
 			kubeInformerFactory.Core().V1().Nodes(),
-			eniconfigName)
+			conf)
 
 		// notice that there is no need to run Start methods in a separate goroutine. (i.e. go kubeInformerFactory.Start(stopCh)
 		// Start method is non-blocking and runs all registered informers in a dedicated goroutine.

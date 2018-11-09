@@ -22,7 +22,6 @@ items:
     - get
     - list
     - watch
-    - create
     - update
     - patch
 

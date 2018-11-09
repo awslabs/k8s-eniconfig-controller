@@ -5,14 +5,12 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
-	// masterURL, kubeconfig, eniconfigName
-	masterURL, kubeconfig, eniconfigName string
+	kubeconfig, region, masterURL, eniconfigName, eniconfigTagName string
+	automaticENIConfig                                             bool
 
-	// rootCmd initializes the base cobra command
 	rootCmd = &cobra.Command{
 		Use:   "eniconfig-controller",
 		Short: `ENIConfig Controller will listen for new nodes being added and automatically annotate them with the proper ENIConfig CR name`,
@@ -32,10 +30,9 @@ func main() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+	rootCmd.PersistentFlags().StringVarP(&region, "region", "r", "us-west-2", "AWS Region which the nodes are deployed into.")
 	rootCmd.PersistentFlags().StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	rootCmd.PersistentFlags().StringVar(&eniconfigName, "eniconfig-name", "default-eniconfig", "The name of the ENIConfig resource to annotate the nodes with.")
-
-	viper.BindPFlag("kubeconfig", rootCmd.PersistentFlags().Lookup("kubeconfig"))
-	viper.BindPFlag("master", rootCmd.PersistentFlags().Lookup("master"))
-	viper.BindPFlag("eniconfig-name", rootCmd.PersistentFlags().Lookup("eniconfig-name"))
+	rootCmd.PersistentFlags().BoolVar(&automaticENIConfig, "automatic-eniconfig", false, "Automatic ENIConfig will configure the controller to load the ENIConfig name from an EC2 tag.")
+	rootCmd.PersistentFlags().StringVar(&eniconfigName, "eniconfig-name", "default-eniconfig", "The name of the ENIConfig resource to annotate the nodes with. Ignored if --automatic-eniconfig set.")
+	rootCmd.PersistentFlags().StringVar(&eniconfigTagName, "eniconfig-tag-name", "k8s.amazonaws.com/eniConfig", "The name of the EC2 tag name to get the ENIConfig Name from.")
 }

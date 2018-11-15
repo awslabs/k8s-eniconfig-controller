@@ -45,6 +45,11 @@ var serverCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		eniconfigClient, err := clientset.NewForConfig(cfg)
+		if err != nil {
+			glog.Fatalf("Error building eniconfig clientset: %s", err.Error())
+		}
+
 		kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 		eniconfigInformerFactory := informers.NewSharedInformerFactory(eniconfigClient, time.Second*30)
 

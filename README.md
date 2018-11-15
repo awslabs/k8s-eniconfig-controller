@@ -18,12 +18,9 @@ If you use `helm` to deploy applications you can use the
 `charts/eniconfig-controller` chart to deploy the controller.
 
 ```bash
-helm  install \
-      --set controller.eniConfigName=<name-of-eniconfig-cr> \
-      --set controller.automaticENIConfig=true \
-      # --set controller.eniConfigName=default-eniconfig
-      --set controller.eniConfigTagName=k8s.amazonaws.com/eniConfig
-      https://github.com/christopherhein/eniconfig-controller/raw/helm-chart/eniconfig-controller-0.0.1.tgz
+helm install \
+     --set controller.automaticENIConfig=true \
+     ./charts/eniconfig-controller
 ```
 
 If you do not use `helm` you can download the config file using the below steps

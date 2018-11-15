@@ -21,3 +21,11 @@ rules:
   - watch
   - update
   - patch
+- apiGroups:
+  - crd.k8s.amazonaws.com
+  resources:
+  - eniconfigs
+  verbs:
+  - get
+  - list
+  - watch

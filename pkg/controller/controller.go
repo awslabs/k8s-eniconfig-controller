@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	eniv1alpha1 "github.com/aws/amazon-vpc-cni-k8s/pkg/apis/crd.k8s.amazonaws.com/v1alpha1"
+	clientset "github.com/aws/amazon-vpc-cni-k8s/pkg/client/clientset/versioned"
+	informers "github.com/aws/amazon-vpc-cni-k8s/pkg/client/informers/externalversions/crd.k8s.amazonaws.com/v1alpha1"
+	listers "github.com/aws/amazon-vpc-cni-k8s/pkg/client/listers/crd.k8s.amazonaws.com/v1alpha1"
 	"github.com/christopherhein/eniconfig-controller/pkg/config"
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	coreinformers "k8s.io/client-go/informers/core/v1"
@@ -17,43 +22,39 @@ import (
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 )
 
-const controllerAgentName = "eniconfig-controller"
-const annotationName = "k8s.amazonaws.com/eniConfig"
+const (
+	controllerAgentName   = "eniconfig-controller"
+	annotationName        = "k8s.amazonaws.com/eniConfig"
+	SuccessSynced         = "Synced"
+	MessageResourceSynced = "Node and ENIConfig synced successfully"
+)
 
-// Controller is the controller implementation for Foo resources
+// controller is the controller implementation
 type controller struct {
-	// kubeclientset is a standard kubernetes clientset
-	kubeclientset kubernetes.Interface
+	kubeclientset      kubernetes.Interface
+	eniconfigclientset clientset.Interface
 
-	nodesLister corelisters.NodeLister
-	nodesSynced cache.InformerSynced
+	nodesLister      corelisters.NodeLister
+	nodesSynced      cache.InformerSynced
+	eniconfigsLister listers.ENIConfigLister
+	eniconfigsSynced cache.InformerSynced
 
 	conf config.Config
 
-	// workqueue is a rate limited work queue. This is used to queue work to be
-	// processed instead of performing it as soon as a change happens. This
-	// means we can ensure we only process a fixed amount of resources at a
-	// time, and makes it easy to ensure we are never processing the same item
-	// simultaneously in two different workers.
 	workqueue workqueue.RateLimitingInterface
-	// recorder is an event recorder for recording Event resources to the
-	// Kubernetes API.
-	recorder record.EventRecorder
+	recorder  record.EventRecorder
 }
 
-// New returns a new sample controller
+// New returns a new eniconfig controller
 func New(
 	kubeclientset kubernetes.Interface,
 	nodeInformer coreinformers.NodeInformer,
+	eniconfigInformer informers.ENIConfigInformer,
 	conf config.Config) *controller {
 
-	// Create event broadcaster
-	// Add sample-controller types to the default Kubernetes Scheme so Events can be
-	// logged for sample-controller types.
 	glog.V(4).Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
@@ -61,50 +62,57 @@ func New(
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	ctrl := &controller{
-		kubeclientset: kubeclientset,
-		nodesLister:   nodeInformer.Lister(),
-		nodesSynced:   nodeInformer.Informer().HasSynced,
-		conf:          conf,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Foos"),
-		recorder:      recorder,
+		kubeclientset:    kubeclientset,
+		nodesLister:      nodeInformer.Lister(),
+		nodesSynced:      nodeInformer.Informer().HasSynced,
+		eniconfigsLister: eniconfigInformer.Lister(),
+		eniconfigsSynced: eniconfigInformer.Informer().HasSynced,
+		conf:             conf,
+		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "ENIConfigs"),
+		recorder:         recorder,
 	}
 
 	glog.Info("Setting up event handlers")
-
-	nodeInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: ctrl.handleObject,
-		UpdateFunc: func(old, new interface{}) {
-			newNode := new.(*corev1.Node)
-			oldNode := old.(*corev1.Node)
-			if newNode.ResourceVersion == oldNode.ResourceVersion {
-				// Periodic resync will send update events for all known Deployments.
-				// Two different versions of the same Deployment will always have different RVs.
+	eniconfigInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: ctrl.handleENIConfig,
+		UpdateFunc: func(old, updated interface{}) {
+			newENI := updated.(*eniv1alpha1.ENIConfig)
+			oldENI := old.(*eniv1alpha1.ENIConfig)
+			if newENI.ResourceVersion == oldENI.ResourceVersion {
 				return
 			}
-			ctrl.handleObject(new)
+			ctrl.handleENIConfig(updated)
 		},
-		DeleteFunc: ctrl.handleObject,
+		DeleteFunc: ctrl.handleENIConfig,
+	})
+
+	nodeInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: ctrl.enqueueNode,
+		UpdateFunc: func(old, updated interface{}) {
+			updatedNode := updated.(*corev1.Node)
+			oldNode := old.(*corev1.Node)
+			if updatedNode.ResourceVersion == oldNode.ResourceVersion {
+				return
+			}
+			ctrl.enqueueNode(updated)
+		},
 	})
 
 	return ctrl
 }
 
-// Run will set up the event handlers for types we are interested in, as well
-// as syncing informer caches and starting workers. It will block until stopCh
-// is closed, at which point it will shutdown the workqueue and wait for
-// workers to finish processing their current work items.
+// Run will configure the event handlers, sync the caches and will block until
+// stopCh is closed, then it will shutdown and wait for work items to process
 func (c *controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer runtime.HandleCrash()
 	defer c.workqueue.ShutDown()
 
-	// Wait for the caches to be synced before starting workers
 	glog.Info("waiting for informer caches to sync")
-	if ok := cache.WaitForCacheSync(stopCh, c.nodesSynced); !ok {
+	if ok := cache.WaitForCacheSync(stopCh, c.nodesSynced, c.eniconfigsSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
 	glog.Info("starting workers")
-	// Launch two workers to process Foo resources
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
@@ -116,16 +124,13 @@ func (c *controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	return nil
 }
 
-// runWorker is a long-running function that will continually call the
-// processNextWorkItem function in order to read and process a message on the
-// workqueue.
+// runWorker runs forever and processes work items using processNextWorkItem
 func (c *controller) runWorker() {
 	for c.processNextWorkItem() {
 	}
 }
 
-// processNextWorkItem will read a single work item off the workqueue and
-// attempt to process it, by calling the syncHandler.
+// processNextWorkItem will pop off the queue and process using the syncHandler
 func (c *controller) processNextWorkItem() bool {
 	obj, shutdown := c.workqueue.Get()
 
@@ -133,33 +138,21 @@ func (c *controller) processNextWorkItem() bool {
 		return false
 	}
 
-	// We wrap this block in a func so we can defer c.workqueue.Done.
 	err := func(obj interface{}) error {
-		// We call Done here so the workqueue knows we have finished
-		// processing this item. We also must remember to call Forget if we
-		// do not want this work item being re-queued. For example, we do
-		// not call Forget if a transient error occurs, instead the item is
-		// put back on the workqueue and attempted again after a back-off
-		// period.
 		defer c.workqueue.Done(obj)
 		var key string
 		var ok bool
-		// We expect strings to come off the workqueue. These are of the
-		// form namespace/name. We do this as the delayed nature of the
-		// workqueue means the items in the informer cache may actually be
-		// more up to date that when the item was initially put onto the
-		// workqueue.
 		if key, ok = obj.(string); !ok {
-			// As the item in the workqueue is actually invalid, we call
-			// Forget here else we'd go into a loop of attempting to
-			// process a work item that is invalid.
 			c.workqueue.Forget(obj)
 			runtime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
 			return nil
 		}
 
-		// Finally, if no error occurs we Forget this item so it does not
-		// get queued again until another change happens.
+		if err := c.syncHandler(key); err != nil {
+			c.workqueue.AddRateLimited(key)
+			return fmt.Errorf("error syncing '%s': %s, requeuing", key, err.Error())
+		}
+
 		c.workqueue.Forget(obj)
 		glog.Infof("successfully synced '%s'", key)
 		return nil
@@ -173,53 +166,94 @@ func (c *controller) processNextWorkItem() bool {
 	return true
 }
 
-// handleObject will take any resource implementing metav1.Object and attempt
-// to find the Foo resource that 'owns' it. It does this by looking at the
-// objects metadata.ownerReferences field for an appropriate OwnerReference.
-// It then enqueues that Foo resource to be processed. If the object does not
-// have an appropriate OwnerReference, it will simply be skipped.
-func (c *controller) handleObject(obj interface{}) {
-	var object metav1.Object
-	var ok bool
-	if object, ok = obj.(metav1.Object); !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object, invalid type"))
-			return
-		}
-		object, ok = tombstone.Obj.(metav1.Object)
-		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
-			return
-		}
-		glog.V(4).Infof("recovered deleted object '%s' from tombstone", object.GetName())
-	}
-	glog.V(4).Infof("processing object: %s", object.GetName())
-
-	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		node, err := c.kubeclientset.Core().Nodes().Get(object.GetName(), metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		nodeCopy := node.DeepCopy()
-
-		eniConfigName, err := c.conf.GetName(nodeCopy.Spec.ProviderID)
-		if err != nil {
-			return err
-		}
-
-		nodeCopy.ResourceVersion = ""
-		nodeCopy.Annotations[annotationName] = eniConfigName
-
-		_, err = c.kubeclientset.Core().Nodes().Update(nodeCopy)
-		if err != nil {
-			return err
-		}
+// syncHander will reconcile the desired/actual state
+func (c *controller) syncHandler(key string) error {
+	_, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
-	})
-	if retryErr != nil {
-		runtime.HandleError(fmt.Errorf("Error updating node object %s", retryErr.Error()))
+	}
+
+	node, err := c.nodesLister.Get(name)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			runtime.HandleError(fmt.Errorf("node '%s' in work queue no longer exists", key))
+			return nil
+		}
+		return err
+	}
+
+	eniconfigName, err := c.conf.GetName(node.Spec.ProviderID)
+	if err != nil {
+		return err
+	}
+
+	if node.Annotations[annotationName] == eniconfigName {
+		return nil
+	}
+
+	eniconfig, err := c.eniconfigsLister.Get(eniconfigName)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			runtime.HandleError(fmt.Errorf("eniconfig '%s' not found", eniconfigName))
+			return nil
+		}
+
+		return err
+	}
+
+	instanceAZ, err := c.conf.GetInstanceAZ(node.Spec.ProviderID)
+	if err != nil {
+		return err
+	}
+
+	subnetAZ, err := c.conf.GetSubnetAZ(eniconfig.Spec.Subnet)
+	if err != nil {
+		return err
+	}
+
+	if instanceAZ != subnetAZ {
+		runtime.HandleError(fmt.Errorf("instance AZ doesn't match ENIConfig subnet AZ '%s' != '%s", instanceAZ, subnetAZ))
+		return nil
+	}
+
+	err = c.updateNodeAnnotations(node, eniconfigName)
+	if err != nil {
+		return err
+	}
+
+	c.recorder.Event(node, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+	return nil
+}
+
+// updateNodeAnnotations will update the annotation to equal the proper ENIConfig
+func (c *controller) updateNodeAnnotations(node *corev1.Node, eniconfigName string) error {
+	nodeCopy := node.DeepCopy()
+	nodeCopy.Annotations[annotationName] = eniconfigName
+	_, err := c.kubeclientset.Core().Nodes().Update(nodeCopy)
+	return err
+}
+
+// enqueueNode will translate the node into a workable item
+func (c *controller) enqueueNode(obj interface{}) {
+	var key string
+	var err error
+	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
+		runtime.HandleError(err)
 		return
 	}
+	c.workqueue.AddRateLimited(key)
+}
+
+func (c *controller) handleENIConfig(obj interface{}) {
+	nodes, err := c.nodesLister.List(labels.Everything())
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("Error listing nodes."))
+		return
+	}
+	for _, node := range nodes {
+		c.enqueueNode(node)
+	}
+
 	return
 }

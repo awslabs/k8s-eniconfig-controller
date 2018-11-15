@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -35,17 +36,46 @@ func (c Config) GetName(providerID string) (string, error) {
 		return c.eniConfigName, nil
 	}
 
-	instanceID, err := getInstanceIDFromProviderID(providerID)
+	_, instanceID, err := getInstanceAZandIDFromProviderID(providerID)
 	if err != nil {
 		return "", err
 	}
 
-	return c.GetConfigTag(instanceID)
+	return c.GetENIConfigTag(instanceID)
 }
 
-// GetConfigTag allows you to get the ENIConfig name from the EC2 instances
+// GetInstanceAZ will return the instance AZ from the provider ID
+func (c Config) GetInstanceAZ(providerID string) (string, error) {
+	instanceAZ, _, err := getInstanceAZandIDFromProviderID(providerID)
+	if err != nil {
+		return "", err
+	}
+	return instanceAZ, nil
+}
+
+// GetSubnetAZ will return the AZ of the subnet from the subnet ID
+func (c Config) GetSubnetAZ(subnetID string) (string, error) {
+	svc := ec2.New(c.awsSession)
+
+	input := &ec2.DescribeSubnetsInput{}
+	input.SetSubnetIds([]*string{&subnetID})
+
+	output, err := svc.DescribeSubnets(input)
+	if err != nil {
+		return "", fmt.Errorf("could not describe subnet with id '%s'", subnetID)
+	}
+
+	//
+	if len(output.Subnets) == 0 {
+		return "", fmt.Errorf("subnet with id '%s' not found", subnetID)
+	}
+
+	return *output.Subnets[0].AvailabilityZone, nil
+}
+
+// GetENIConfigTag allows you to get the ENIConfig name from the EC2 instances
 // tag, customize this by using the ENIConfig.eniConfigTagName
-func (c Config) GetConfigTag(instanceID string) (name string, err error) {
+func (c Config) GetENIConfigTag(instanceID string) (name string, err error) {
 	svc := ec2.New(c.awsSession)
 
 	filterID := &ec2.Filter{}
@@ -57,7 +87,7 @@ func (c Config) GetConfigTag(instanceID string) (name string, err error) {
 
 	output, err := svc.DescribeTags(input)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not describe EC2 instance tags for instance id '%s'", instanceID)
 	}
 
 	for _, tag := range output.Tags {
@@ -71,13 +101,13 @@ func (c Config) GetConfigTag(instanceID string) (name string, err error) {
 
 // Below are custom functions to parse the InstanceID and AZ from the ProviderID
 // This can probably be refactored
-func getInstanceIDFromProviderID(providerID string) (string, error) {
+func getInstanceAZandIDFromProviderID(providerID string) (string, string, error) {
 	u, err := url.Parse(providerID)
 	if err != nil {
-		return "", err
+		return "", "", fmt.Errorf("could not parse provider ID '%s'", providerID)
 	}
-	_, instanceID := parsePath(u)
-	return instanceID, nil
+	instanceAZ, instanceID := parsePath(u)
+	return instanceAZ, instanceID, nil
 }
 
 func parsePath(u *url.URL) (az, instanceID string) {

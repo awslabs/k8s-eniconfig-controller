@@ -65,11 +65,9 @@ items:
         serviceAccountName: eniconfig-controller
         containers:
         - name: eniconfig-controller
-          image: christopherhein/eniconfig-controller:v0.0.1-alpha2
+          image: christopherhein/eniconfig-controller:v0.0.1-alpha4
           imagePullPolicy: Always
           args:
             - server
-            - --region=us-west-2
             - --automatic-eniconfig
-            # - --eniconfig-name=default-eniconfig
-            - --eniconfig-tag-name=k8s.amazonaws.com/eniConfig
+            #- --region=us-west-2

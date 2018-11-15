@@ -1,0 +1,20 @@
+[[override]]
+  name = "github.com/operator-framework/operator-sdk"
+  revision = "7152fb77bf08cfe106eda02aff3a089c93ccbfa7"
+
+[[constraint]]
+  name = "k8s.io/api"
+  revision = "73d903622b7391f3312dcbac6483fed484e185f8"
+
+[[constraint]]
+  name = "k8s.io/apimachinery"
+  revision = "302974c03f7e50f16561ba237db776ab93594ef6"
+
+[[constraint]]
+  name = "k8s.io/client-go"
+  revision = "989be4278f353e42f26c416c53757d16fcff77db"
+
+[[constraint]]
+  name = "github.com/aws/amazon-vpc-cni-k8s"
+  source = "github.com/christopherhein/amazon-vpc-cni-k8s"
+  branch = "feature/226-crd-client"

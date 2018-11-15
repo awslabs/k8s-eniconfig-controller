@@ -1,3 +1,63 @@
+Release v1.15.76 (2018-11-14)
+===
+
+### Service Client Updates
+* `service/autoscaling`: Updates service API and documentation
+  * EC2 Auto Scaling now allows users to provision and automatically scale instances across purchase options (Spot, On-Demand, and RIs) and instance types in a single Auto Scaling group (ASG).
+* `service/ec2`: Updates service API and documentation
+  * Amazon EC2 Fleet now supports a new request type "Instant" that you can use to provision capacity synchronously across instance types & purchase models and CreateFleet will return the instances launched in the API response.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/mediatailor`: Updates service API and documentation
+* `service/resource-groups`: Updates service API and documentation
+* `service/sagemaker`: Updates service API and documentation
+  * SageMaker now makes the final set of metrics published from training jobs available in the DescribeTrainingJob results.  Automatic Model Tuning now supports warm start of hyperparameter tuning jobs.  Notebook instances now support a larger number of instance types to include instances from the ml.t3, ml.m5, ml.c4, ml.c5 families.
+* `service/servicecatalog`: Updates service API and documentation
+  * Adds support for Cloudformation StackSets in Service Catalog
+* `service/sns`: Updates service API and documentation
+  * Added an optional request parameter, named Attributes, to the Amazon SNS CreateTopic API action. For more information, see the Amazon SNS API Reference (https://docs.aws.amazon.com/sns/latest/api/API_CreateTopic.html).
+
+Release v1.15.75 (2018-11-13)
+===
+
+### Service Client Updates
+* `service/budgets`: Updates service documentation
+  * Doc Update: 1. Available monthly-budgets maximal history data points from 12 to 13.  2. Added 'Amazon Elasticsearch' costfilters support.
+* `service/chime`: Updates service API and documentation
+  * This release adds support in ListUsers API to filter the list by an email address.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/redshift`: Updates service API and documentation
+  * Amazon Redshift provides the option to defer non-mandatory maintenance updates to a later date.
+
+Release v1.15.74 (2018-11-12)
+===
+
+### Service Client Updates
+* `service/batch`: Updates service API and documentation
+  * Adding EC2 Launch Template support in AWS Batch Compute Environments.
+* `service/budgets`: Updates service API and documentation
+  * 1. Added budget performance history, enabling you to see how well your budgets matched your actual costs and usage.                                                                                             2. Added budget performance history, notification state, and last updated time, enabling you to see how well your budgets matched your actual costs and usage, how often your budget alerts triggered, and when your budget was last updated.
+* `service/cloudformation`: Updates service API, documentation, and paginators
+  * The Drift Detection feature enables customers to detect whether a stack's actual configuration differs, or has drifted, from its expected configuration as defined within AWS CloudFormation.
+* `service/codepipeline`: Updates service API and documentation
+  * Add support for cross-region pipeline with accompanying definitions as needed in the AWS CodePipeline API Guide.
+* `service/firehose`: Updates service API and documentation
+  * With this release, Amazon Kinesis Data Firehose allows you to enable/disable server-side encryption(SSE) for your delivery streams ensuring encryption of data at rest. For technical documentation, look at https://docs.aws.amazon.com/firehose/latest/dev/encryption.html
+* `service/polly`: Updates service API
+  * Amazon Polly adds new female voices: Italian - Bianca, Castilian Spanish - Lucia and new language: Mexican Spanish with new female voice - Mia.
+* `service/rds`: Updates service API and documentation
+  * API Update for RDS: this update enables Custom Endpoints, a new feature compatible with Aurora Mysql, Aurora PostgreSQL and Neptune that allows users to configure a customizable endpoint that will provide access to their instances in a cluster.
+
+### SDK Bugs
+* `internal/ini`: allowing LHS of equal expression to contain spaces (#2265)
+  * Fixes a backward compatibility issue where LHS of equal expr could contain spaces
+Release v1.15.73 (2018-11-09)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/mediapackage`: Updates service API and documentation
+  * As a part of SPEKE DRM encryption, MediaPackage now supports encrypted content keys. You can enable this enhanced content protection in an OriginEndpoint's encryption settings. When this is enabled, MediaPackage indicates to the key server that it requires an encrypted response. To use this, your DRM key provider must support content key encryption. For details on this feature, see the AWS MediaPackage User Guide at https://docs.aws.amazon.com/mediapackage/latest/ug/what-is.html.
+
 Release v1.15.72 (2018-11-08)
 ===
 

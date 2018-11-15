@@ -28,4 +28,8 @@ rules:
   verbs:
   - get
   - list
+<<<<<<< HEAD
   - watch
+=======
+  - watch
+>>>>>>> e432d14... Adding Subnet AZ checks

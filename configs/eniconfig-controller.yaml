@@ -51,6 +51,16 @@ items:
     name: eniconfig-controller
     namespace: default
 
+- apiVersion: policy/v1beta1
+  kind: PodDisruptionBudget
+  metadata:
+    name: eniconfig-controller
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        app: eniconfig-controller
+
 - kind: Deployment
   apiVersion: apps/v1beta1
   metadata:
@@ -63,6 +73,7 @@ items:
           app: eniconfig-controller
       spec:
         serviceAccountName: eniconfig-controller
+        hostNetwork: true
         containers:
         - name: eniconfig-controller
           image: christopherhein/eniconfig-controller:v0.0.1-alpha4

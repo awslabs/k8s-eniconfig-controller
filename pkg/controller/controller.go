@@ -28,8 +28,8 @@ import (
 const (
 	controllerAgentName   = "eniconfig-controller"
 	annotationName        = "k8s.amazonaws.com/eniConfig"
-	SuccessSynced         = "Synced"
-	MessageResourceSynced = "Node and ENIConfig synced successfully"
+	SuccessSynced         = "ENIConfigSynced"
+	MessageResourceSynced = "Node '%s' and ENIConfig '%s' synced successfully"
 )
 
 // controller is the controller implementation
@@ -213,7 +213,7 @@ func (c *controller) syncHandler(key string) error {
 	}
 
 	if instanceAZ != subnetAZ {
-		runtime.HandleError(fmt.Errorf("instance AZ doesn't match ENIConfig subnet AZ '%s' != '%s", instanceAZ, subnetAZ))
+		runtime.HandleError(fmt.Errorf("instance AZ doesn't match ENIConfig subnet AZ '%s' != '%s'", instanceAZ, subnetAZ))
 		return nil
 	}
 
@@ -222,7 +222,7 @@ func (c *controller) syncHandler(key string) error {
 		return err
 	}
 
-	c.recorder.Event(node, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+	c.recorder.Event(node, corev1.EventTypeNormal, SuccessSynced, fmt.Sprintf(MessageResourceSynced, node.GetName(), eniconfigName))
 	return nil
 }
 

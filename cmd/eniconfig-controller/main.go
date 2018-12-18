@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kris-nova/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -35,4 +36,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&automaticENIConfig, "automatic-eniconfig", true, "Automatic ENIConfig will configure the controller to load the ENIConfig name from an EC2 tag.")
 	rootCmd.PersistentFlags().StringVar(&eniconfigName, "eniconfig-name", "default-eniconfig", "The name of the ENIConfig resource to annotate the nodes with. Ignored if --automatic-eniconfig set.")
 	rootCmd.PersistentFlags().StringVar(&eniconfigTagName, "eniconfig-tag-name", "k8s.amazonaws.com/eniConfig", "The name of the EC2 tag name to get the ENIConfig Name from.")
+
+	logger.Level = 4
 }

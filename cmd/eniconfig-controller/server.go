@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	clientset "github.com/aws/amazon-vpc-cni-k8s/pkg/client/clientset/versioned"
@@ -11,7 +12,7 @@ import (
 	"github.com/christopherhein/eniconfig-controller/pkg/config"
 	"github.com/christopherhein/eniconfig-controller/pkg/controller"
 	"github.com/christopherhein/eniconfig-controller/pkg/signals"
-	"github.com/golang/glog"
+	"github.com/kris-nova/logger"
 	"github.com/spf13/cobra"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -28,17 +29,20 @@ var serverCmd = &cobra.Command{
 
 		cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 		if err != nil {
-			glog.Fatalf("Error building kubeconfig: %s", err.Error())
+			logger.Critical("Error building kubeconfig: %s", err.Error())
+			os.Exit(1)
 		}
 
 		kubeClient, err := kubernetes.NewForConfig(cfg)
 		if err != nil {
-			glog.Fatalf("Error building kubernetes clientset: %s", err.Error())
+			logger.Critical("Error building kubernetes clientset: %s", err.Error())
+			os.Exit(1)
 		}
 
 		eniconfigClient, err := clientset.NewForConfig(cfg)
 		if err != nil {
-			glog.Fatalf("Error building eniconfig clientset: %s", err.Error())
+			logger.Critical("Error building eniconfig clientset: %s", err.Error())
+			os.Exit(1)
 		}
 
 		kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
@@ -46,20 +50,23 @@ var serverCmd = &cobra.Command{
 
 		awsSession, err := session.NewSession()
 		if err != nil {
-			glog.Fatalf("Error getting creating aws session: %s", err.Error())
+			logger.Critical("Error getting creating aws session: %s", err.Error())
+			os.Exit(1)
 		}
 
 		metadata := ec2metadata.New(awsSession)
 		if region == "" {
 			region, err = metadata.Region()
 			if err != nil {
-				glog.Fatalf("Error getting ec2 region: %s", err.Error())
+				logger.Critical("Error getting ec2 region: %s", err.Error())
+				os.Exit(1)
 			}
 		}
 
 		awsSession, err = session.NewSession(&aws.Config{Region: aws.String(region)})
 		if err != nil {
-			glog.Fatalf("Error getting creating aws session: %s", err.Error())
+			logger.Critical("Error getting creating aws session: %s", err.Error())
+			os.Exit(1)
 		}
 
 		conf := config.New(automaticENIConfig, eniconfigName, eniconfigTagName, awsSession)
@@ -75,7 +82,8 @@ var serverCmd = &cobra.Command{
 		eniconfigInformerFactory.Start(stopCh)
 
 		if err = ctrl.Run(2, stopCh); err != nil {
-			glog.Fatalf("Error running controller: %s", err.Error())
+			logger.Critical("Error running controller: %s", err.Error())
+			os.Exit(1)
 		}
 	},
 }

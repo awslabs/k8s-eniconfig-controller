@@ -9,7 +9,7 @@ import (
 	informers "github.com/aws/amazon-vpc-cni-k8s/pkg/client/informers/externalversions/crd.k8s.amazonaws.com/v1alpha1"
 	listers "github.com/aws/amazon-vpc-cni-k8s/pkg/client/listers/crd.k8s.amazonaws.com/v1alpha1"
 	"github.com/christopherhein/eniconfig-controller/pkg/config"
-	"github.com/golang/glog"
+	"github.com/kris-nova/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -55,9 +55,9 @@ func New(
 	eniconfigInformer informers.ENIConfigInformer,
 	conf config.Config) *controller {
 
-	glog.V(4).Info("Creating event broadcaster")
+	logger.Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(glog.Infof)
+	eventBroadcaster.StartLogging(logger.Info)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
@@ -72,7 +72,7 @@ func New(
 		recorder:         recorder,
 	}
 
-	glog.Info("Setting up event handlers")
+	logger.Info("Setting up event handlers")
 	eniconfigInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: ctrl.handleENIConfig,
 		UpdateFunc: func(old, updated interface{}) {
@@ -107,20 +107,19 @@ func (c *controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer runtime.HandleCrash()
 	defer c.workqueue.ShutDown()
 
-	glog.Info("waiting for informer caches to sync")
+	logger.Info("waiting for informer caches to sync")
 	if ok := cache.WaitForCacheSync(stopCh, c.nodesSynced, c.eniconfigsSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
-	glog.Info("starting workers")
+	logger.Info("starting workers")
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
-	glog.Info("started workers")
+	logger.Info("started workers")
 	<-stopCh
-	glog.Info("shutting down workers")
-
+	logger.Info("shutting down workers")
 	return nil
 }
 
@@ -154,7 +153,7 @@ func (c *controller) processNextWorkItem() bool {
 		}
 
 		c.workqueue.Forget(obj)
-		glog.Infof("successfully synced '%s'", key)
+		logger.Info("successfully synced '%s'", key)
 		return nil
 	}(obj)
 
@@ -204,12 +203,14 @@ func (c *controller) syncHandler(key string) error {
 
 	instanceAZ, err := c.conf.GetInstanceAZ(node.Spec.ProviderID)
 	if err != nil {
-		return err
+		runtime.HandleError(fmt.Errorf("could not get instance AZ from provider ID '%s'", node.Spec.ProviderID))
+		return nil
 	}
 
 	subnetAZ, err := c.conf.GetSubnetAZ(eniconfig.Spec.Subnet)
 	if err != nil {
-		return err
+		runtime.HandleError(fmt.Errorf("could not get subnet AZ from subnet ID '%s'", eniconfig.Spec.Subnet))
+		return nil
 	}
 
 	if instanceAZ != subnetAZ {

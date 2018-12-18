@@ -76,7 +76,7 @@ items:
         hostNetwork: true
         containers:
         - name: eniconfig-controller
-          image: christopherhein/eniconfig-controller:v0.0.1-alpha5
+          image: christopherhein/eniconfig-controller:v0.0.1-alpha7
           imagePullPolicy: Always
           args:
             - server

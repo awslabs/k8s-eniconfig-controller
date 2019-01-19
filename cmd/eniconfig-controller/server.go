@@ -9,9 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/christopherhein/eniconfig-controller/pkg/config"
-	"github.com/christopherhein/eniconfig-controller/pkg/controller"
-	"github.com/christopherhein/eniconfig-controller/pkg/signals"
+	"github.com/awslabs/k8s-eniconfig-controller/pkg/config"
+	"github.com/awslabs/k8s-eniconfig-controller/pkg/controller"
+	"github.com/awslabs/k8s-eniconfig-controller/pkg/signals"
 	"github.com/kris-nova/logger"
 	"github.com/spf13/cobra"
 	kubeinformers "k8s.io/client-go/informers"
@@ -43,11 +43,6 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			logger.Critical("Error building eniconfig clientset: %s", err.Error())
 			os.Exit(1)
-		}
-
-		eniconfigClient, err := clientset.NewForConfig(cfg)
-		if err != nil {
-			glog.Fatalf("Error building eniconfig clientset: %s", err.Error())
 		}
 
 		kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)

@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -27,7 +28,13 @@ var serverCmd = &cobra.Command{
 		// set up signals so we handle the first shutdown signal gracefully
 		stopCh := signals.SetupSignalHandler()
 
-		cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
+		var cfg *rest.Config
+		var err error
+		if masterURL == "" && kubeconfig == "" {
+			cfg, err = rest.InClusterConfig()
+		} else {
+			cfg, err = clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
+		}
 		if err != nil {
 			logger.Critical("Error building kubeconfig: %s", err.Error())
 			os.Exit(1)

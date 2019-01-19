@@ -6,6 +6,7 @@ import (
 
 	"github.com/kris-nova/logger"
 	"github.com/spf13/cobra"
+	"flag"
 )
 
 var (
@@ -23,6 +24,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -8,7 +8,7 @@ import (
 	clientset "github.com/aws/amazon-vpc-cni-k8s/pkg/client/clientset/versioned"
 	informers "github.com/aws/amazon-vpc-cni-k8s/pkg/client/informers/externalversions/crd.k8s.amazonaws.com/v1alpha1"
 	listers "github.com/aws/amazon-vpc-cni-k8s/pkg/client/listers/crd.k8s.amazonaws.com/v1alpha1"
-	"github.com/christopherhein/eniconfig-controller/pkg/config"
+	"github.com/awslabs/k8s-eniconfig-controller/pkg/config"
 	"github.com/kris-nova/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

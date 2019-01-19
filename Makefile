@@ -1,6 +1,6 @@
 commitSHA := $(shell git describe --dirty --always)
 dateStr := $(shell date +%s)
-repo ?= github.com/christopherhein/eniconfig-controller
+repo ?= github.com/awslabs/k8s-eniconfig-controller
 
 .PHONY: build
 build:

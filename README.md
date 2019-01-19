@@ -3,7 +3,7 @@
 > This controller is still in an alpha state, please file issues and pull
 > requests as you run into issues. Thanks 🎉
 
-This repository will inplement auto annotating your Kubernete data plane nodes
+This repository will implement auto annotating your Kubernetes data plane nodes
 with a desired `ENIConfig` name. This was originally implemented in the
 `amazon-vpc-cni-k8s` project in this pull request -
 https://github.com/aws/amazon-vpc-cni-k8s/pull/165
@@ -70,25 +70,16 @@ aws iam attach-role-policy \
     --policy-arn $POLICY_ARN
 ```
 
-Now that your permissions are properly configured you can deploy the controller
-either using `helm` or manually by `kubectl`
-
-If you use `helm` to deploy applications you can use the
-`charts/eniconfig-controller` chart to deploy the controller.
-
 ```bash
-helm install --name eniconfig-controller ./charts/eniconfig-controller
+kubectl apply -f https://raw.githubusercontent.com/christopherhein/eniconfig-controller/master/configs/eniconfig-controller.yaml
 ```
 
-> Once this project is out of alpha state these will be available via the
-> standard `helm` repositories.
+### Notes about helm
 
-If you'd like to use this without `helm` you can just `kubectl` apply the
-manifest from the repository.
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/awslabs/k8s-eniconfig-controller/master/configs/eniconfig-controller.yaml
-```
+Because this Deployment has to be running on before other pods are scheduled
+you cannot use `helm`. You will notice in the 
+`configs/eniconfig-controller.yaml` it runs on `hostNetwork: true` to allow
+the pod to take the Instance Tag and look up the proper subnets to apply.
 
 ## Running in Dev
 

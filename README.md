@@ -66,7 +66,7 @@ your role.
 
 ```bash
 aws iam attach-role-policy \
-    --role-name {WORKER NODE ROLE ARN} \
+    --role-name {WORKER NODE ROLE NAME} \
     --policy-arn $POLICY_ARN
 ```
 

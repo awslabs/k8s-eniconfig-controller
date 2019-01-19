@@ -57,7 +57,7 @@ the proper policies assigned.
 ```bash
 POLICY_ARN=$(aws iam create-policy \
                  --policy-name eniconfig-controller-policy \
-                 --cli-input-json file://configs/eniconfig-controller-policy.json | jq -r ".Policy.Arn")
+                 --policy-document  file://configs/eniconfig-controller-policy.json | jq -r ".Policy.Arn")
 ```
 
 Now that you have this defined you can add this to the worker node role,
@@ -66,7 +66,7 @@ your role.
 
 ```bash
 aws iam attach-role-policy \
-    --role-arn {WORKER NODE ROLE ARN} \
+    --role-name {WORKER NODE ROLE ARN} \
     --policy-arn $POLICY_ARN
 ```
 

@@ -74,7 +74,7 @@ aws iam attach-role-policy \
 kubectl apply -f https://raw.githubusercontent.com/christopherhein/eniconfig-controller/master/configs/eniconfig-controller.yaml
 ```
 
-### Notes about helm
+### Notes about `helm`
 
 Because this Deployment has to be running on before other pods are scheduled
 you cannot use `helm`. You will notice in the 

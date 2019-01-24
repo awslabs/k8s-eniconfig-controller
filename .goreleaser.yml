@@ -29,8 +29,8 @@ git:
 # Release will configure where the GitHub release is handled
 release:
   github:
-    owner: christopherhein
-    name: eniconfig-controller
+    owner: awslabs
+    name: k8s-eniconfig-controller
   draft: false
   prerelease: true
 

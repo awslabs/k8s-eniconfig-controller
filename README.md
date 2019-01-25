@@ -57,7 +57,7 @@ the proper policies assigned.
 ```bash
 POLICY_ARN=$(aws iam create-policy \
                  --policy-name eniconfig-controller-policy \
-                 --policy-document https://raw.githubusercontent.com/awslabs/k8s-eniconfig-controller/blob/master/configs/eniconfig-controller-policy.json | jq -r ".Policy.Arn")
+                 --policy-document https://raw.githubusercontent.com/awslabs/k8s-eniconfig-controller/master/configs/eniconfig-controller-policy.json | jq -r ".Policy.Arn")
 ```
 
 Now that you have this defined you can add this to the worker node role,

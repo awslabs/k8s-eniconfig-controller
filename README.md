@@ -71,7 +71,7 @@ aws iam attach-role-policy \
 ```
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/awslabs/k8s-eniconfig-controller/blob/master/configs/eniconfig-controller.yaml
+kubectl apply -f https://raw.githubusercontent.com/awslabs/k8s-eniconfig-controller/master/configs/eniconfig-controller.yaml
 ```
 
 ### Notes about `helm`

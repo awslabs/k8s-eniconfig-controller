@@ -57,7 +57,7 @@ the proper policies assigned.
 ```bash
 POLICY_ARN=$(aws iam create-policy \
                  --policy-name eniconfig-controller-policy \
-                 --policy-document  file://configs/eniconfig-controller-policy.json | jq -r ".Policy.Arn")
+                 --policy-document https://raw.githubusercontent.com/awslabs/k8s-eniconfig-controller/blob/master/configs/eniconfig-controller-policy.json | jq -r ".Policy.Arn")
 ```
 
 Now that you have this defined you can add this to the worker node role,
@@ -71,7 +71,7 @@ aws iam attach-role-policy \
 ```
 
 ```bash
-kubectl apply -f https://github.com/awslabs/k8s-eniconfig-controller/blob/master/configs/eniconfig-controller.yaml
+kubectl apply -f https://raw.githubusercontent.com/awslabs/k8s-eniconfig-controller/blob/master/configs/eniconfig-controller.yaml
 ```
 
 ### Notes about `helm`
